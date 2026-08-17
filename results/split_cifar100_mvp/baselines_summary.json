@@ -1,0 +1,38 @@
+{
+  "cl_ewc": {
+    "method": "cl_ewc",
+    "num_orderings": 5,
+    "avg_accuracy_mean": 0.71168,
+    "avg_accuracy_std": 0.013704656143077774,
+    "forgetting_mean": 0.22493333333333335,
+    "forgetting_std": 0.013076149242508132,
+    "total_params_mean": 147456.0,
+    "per_ordering": [
+      {
+        "avg_accuracy": 0.7224999999999999,
+        "forgetting": 0.21555555555555556,
+        "bwt": -0.21555555555555556
+      },
+      {
+        "avg_accuracy": 0.6933,
+        "forgetting": 0.23744444444444449,
+        "bwt": -0.23744444444444449
+      },
+      {
+        "avg_accuracy": 0.7318,
+        "forgetting": 0.20377777777777778,
+        "bwt": -0.20377777777777778
+      },
+      {
+        "avg_accuracy": 0.7049,
+        "forgetting": 0.23444444444444448,
+        "bwt": -0.23444444444444448
+      },
+      {
+        "avg_accuracy": 0.7059000000000001,
+        "forgetting": 0.23344444444444445,
+        "bwt": -0.23344444444444445
+      }
+    ]
+  }
+}

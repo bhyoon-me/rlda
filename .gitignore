@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Datasets (downloadable / large binaries)
+data/cifar-100-python/
+data/cifar-100-python.tar.gz
+data/tiny-imagenet-200/
+*.tar.gz
+
+# Model / policy checkpoints
+*.pt
+*.pth
+*.ckpt
+
+# Results artifacts (large / generated)
+results/**/*.pt
+
+# Windows / misc
+desktop.ini
+*.tmp
+*~
+.DS_Store
+
+# Editor
+.vscode/
+.idea/

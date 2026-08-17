@@ -1,0 +1,135 @@
+# ====================================================================
+# RLDA MVP Config: Split CIFAR-100 + ViT-Tiny + 9-Profile Bandit
+# ====================================================================
+# Priority 1 experiment ??must work before anything else.
+
+seed: 42
+num_seeds: 3  # run 3 seeds for error bars
+
+# --- Dataset ---
+dataset:
+  name: split_cifar100
+  num_tasks: 10          # 10 tasks × 10 classes each
+  classes_per_task: 10
+  img_size: 224          # ViT input size
+  num_workers: 0         # 0 avoids Windows multiprocessing issues
+  val_ratio: 0.1         # 10% of each task for validation
+  data_root: C:/rlda_data
+
+# --- Backbone ---
+backbone:
+  name: vit_tiny_patch16_224
+  pretrained: true        # ImageNet pretrained
+  freeze_backbone: true   # only adapters are trained
+  num_layers: 12          # ViT-Tiny has 12 transformer blocks
+
+# --- LoRA ---
+lora:
+  target_modules: ["qkv", "proj", "fc1", "fc2"]  # attention + FFN
+  init_std: 0.01
+  alpha_ratio: 2.0        # lora_alpha = alpha_ratio * rank
+
+# --- Inner Training ---
+inner_training:
+  epochs_per_task: 10
+  batch_size: 64
+  lr: 1e-3
+  weight_decay: 0.01
+  optimizer: adamw
+  scheduler: cosine
+  warmup_epochs: 1
+
+# --- Memory Buffer ---
+buffer:
+  size: 2000              # ~20 samples/class for stronger replay
+  strategy: reservoir      # reservoir sampling
+  replay_weight: 1.0       # stronger replay
+
+# --- Protection (EWC-style) ---
+protection:
+  lambda_low: 0
+  lambda_med: 10
+  lambda_high: 50
+  fisher_samples: 200      # samples to estimate Fisher per task
+
+# --- Allocation Profiles (9 profiles) ---
+profiles:
+  - name: minimal
+    layer_selection: top_2
+    rank: 2
+    protection: high
+
+  - name: conservative
+    layer_selection: attention_only
+    rank: 4
+    protection: high
+
+  - name: balanced
+    layer_selection: all
+    rank: 4
+    protection: med
+
+  - name: aggressive
+    layer_selection: all
+    rank: 8
+    protection: med
+
+  - name: plastic
+    layer_selection: all
+    rank: 16
+    protection: low
+
+  - name: selective_low
+    layer_selection: gradient_top50
+    rank: 4
+    protection: med
+
+  - name: selective_high
+    layer_selection: gradient_top50
+    rank: 8
+    protection: med
+
+  - name: reuse_low
+    layer_selection: copy_init_plus_top2
+    rank: 2
+    protection: high
+
+  - name: reuse_high
+    layer_selection: copy_init_plus_all
+    rank: 4
+    protection: med
+
+# --- Bandit Policy ---
+bandit:
+  state_dim: null          # auto-computed: d_e + 4 + L + 2
+  hidden_dims: [256, 128]
+  num_actions: 9
+  lr: 3e-4
+  entropy_coef: 0.1        # entropy bonus for exploration
+  entropy_decay: 0.995      # decay per ordering
+  entropy_min: 0.01
+  baseline: running_mean    # variance reduction
+
+# --- Meta-Training ---
+meta:
+  num_train_orderings: 20
+  num_eval_orderings: 5    # held-out for transfer test
+  probe_size: 128           # samples for state construction
+
+# --- Evaluation ---
+eval:
+  eval_every_task: true     # evaluate all seen tasks after each new task
+  metrics: [avg_accuracy, forgetting, bwt, total_params]
+
+# --- Logging ---
+logging:
+  save_dir: ./results/split_cifar100_mvp
+  wandb_project: rlda
+  save_policy: true
+  save_allocations: true    # log which profile was chosen per task
+
+cl_baselines:
+  ewc_lambda: 10000.0
+  fisher_batches: 20     # batches for diagonal Fisher estimate
+  lwf_alpha: 1.0         # LwF distillation weight
+  lwf_temperature: 2.0   # LwF softmax temperature

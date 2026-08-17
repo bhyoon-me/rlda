@@ -1,0 +1,69 @@
+# ====================================================================
+# RLDA Config: Split TinyImageNet (for cross-dataset transfer target)
+# ====================================================================
+# This config is used when deploying a CIFAR-100-trained policy
+# on TinyImageNet. Also usable for standalone TinyImageNet experiments.
+
+seed: 42
+
+dataset:
+  name: split_tinyimagenet
+  num_tasks: 10
+  classes_per_task: 20   # 200 classes / 10 tasks
+  img_size: 224
+  num_workers: 0
+  val_ratio: 0.1
+  data_root: ./data
+
+backbone:
+  name: vit_tiny_patch16_224
+  pretrained: true
+  freeze_backbone: true
+  num_layers: 12
+
+lora:
+  target_modules: ["qkv", "proj", "fc1", "fc2"]
+  init_std: 0.01
+  alpha_ratio: 2.0
+
+inner_training:
+  epochs_per_task: 10
+  batch_size: 64
+  lr: 1e-3
+  weight_decay: 0.01
+  optimizer: adamw
+
+buffer:
+  size: 4000
+  strategy: reservoir
+  replay_weight: 1.0
+
+protection:
+  lambda_low: 0
+  lambda_med: 10
+  lambda_high: 50
+  fisher_samples: 200
+
+bandit:
+  hidden_dims: [256, 128]
+  num_actions: 9
+  lr: 3e-4
+  entropy_coef: 0.1
+  entropy_decay: 0.995
+  entropy_min: 0.01
+
+meta:
+  num_train_orderings: 20
+  num_eval_orderings: 5
+  probe_size: 128
+
+logging:
+  save_dir: ./results/split_tinyimagenet
+  save_policy: true
+  save_allocations: true
+
+cl_baselines:
+  ewc_lambda: 100.0      # EWC quadratic penalty strength
+  fisher_batches: 20     # batches for diagonal Fisher estimate
+  lwf_alpha: 1.0         # LwF distillation weight
+  lwf_temperature: 2.0   # LwF softmax temperature
